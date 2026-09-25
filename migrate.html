@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALCKH — One-time data migration</title>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<style>
+body{font-family:Inter,system-ui,sans-serif;background:#f3f5f8;color:#1b2430;margin:0;padding:32px;font-size:14px}
+.card{max-width:760px;margin:0 auto;background:#fff;border:1px solid #e3e7ed;border-radius:12px;padding:24px 28px;box-shadow:0 2px 8px rgba(20,30,45,.06)}
+h1{font-size:20px;margin:0 0 6px}p{color:#51606f;line-height:1.5}
+button{padding:10px 18px;border:none;border-radius:8px;background:#2f4a68;color:#fff;font-weight:600;cursor:pointer;font-size:13px;margin-right:8px}
+button:disabled{opacity:.45;cursor:default}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12.5px}
+td,th{padding:7px 9px;border-bottom:1px solid #e3e7ed;text-align:left}th{background:#eef1f5}
+.ok{color:#12805c;font-weight:600}.err{color:#c23a52;font-weight:600}.muted{color:#7c8a9a}
+</style></head><body><div class="card">
+<h1>One-time data migration</h1>
+<p>Copies the Tax Command Center data (collection <code>alckh_kv</code>) from the <b>old</b> Firebase project
+(<code>alckh-control-a868c</code>) into the <b>new</b> one (<code>alckh-tax-command</code>). The old data is only read, never changed or deleted.
+Run this once, before your team starts using the new link.</p>
+<button id="scanBtn" onclick="scan()">1. Scan old project</button>
+<button id="copyBtn" onclick="copyAll()" disabled>2. Copy to new project</button>
+<div id="status" class="muted" style="margin-top:14px"></div>
+<table id="tbl" style="display:none"><thead><tr><th>Document</th><th>Size</th><th>Result</th></tr></thead><tbody></tbody></table>
+</div>
+<script>
+const OLD_CFG={apiKey:"AIzaSyCAC_hWVU26xPgz2OC_cstob6ychj5nds0",authDomain:"alckh-control-a868c.firebaseapp.com",projectId:"alckh-control-a868c",storageBucket:"alckh-control-a868c.firebasestorage.app",messagingSenderId:"204787015304",appId:"1:204787015304:web:43eaef8ddd98a802a0893d"};
+const NEW_CFG={apiKey:"AIzaSyDjiZEqtjCse09Jp6nZC9b3KQrN-rtOXbI",authDomain:"alckh-tax-command.firebaseapp.com",projectId:"alckh-tax-command",storageBucket:"alckh-tax-command.firebasestorage.app",messagingSenderId:"585681944276",appId:"1:585681944276:web:5fba455c12216664a54541"};
+const oldDb=firebase.initializeApp(OLD_CFG,'old').firestore();
+const newDb=firebase.initializeApp(NEW_CFG,'new').firestore();
+const COL='alckh_kv';
+let docs=[];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function scan(){
+  $('status').textContent='Reading old project…';
+  try{
+    const snap=await oldDb.collection(COL).get();
+    docs=snap.docs.map(d=>({id:d.id,data:d.data()}));
+  }catch(e){
+    $('status').innerHTML='<span class="err">Could not read the old project: '+esc(e.message)+'</span><br>If it says "permission denied", the old project\'s test-mode rules have expired. Tell Claude and we\'ll use the manual route instead.';
+    return;
+  }
+  if(!docs.length){ $('status').innerHTML='The old project has <b>no</b> Tax Command Center data — nothing to migrate. You can skip this step.'; return; }
+  const tb=$('tbl').querySelector('tbody');
+  tb.innerHTML=docs.map((d,i)=>`<tr><td>${esc(d.id)}</td><td>${((d.data.value||'').length/1024).toFixed(1)} KB</td><td id="r${i}" class="muted">waiting</td></tr>`).join('');
+  $('tbl').style.display='';
+  $('status').innerHTML=`Found <b>${docs.length}</b> document(s). Click “Copy to new project”.`;
+  $('copyBtn').disabled=false;
+}
+
+async function copyAll(){
+  $('copyBtn').disabled=true; $('scanBtn').disabled=true;
+  let ok=0,fail=0;
+  for(let i=0;i<docs.length;i++){
+    const d=docs[i];
+    try{
+      await newDb.collection(COL).doc(d.id).set({value:d.data.value, updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+      $('r'+i).className='ok'; $('r'+i).textContent='copied'; ok++;
+    }catch(e){
+      $('r'+i).className='err'; $('r'+i).textContent=e.message; fail++;
+    }
+  }
+  $('status').innerHTML=fail
+    ? `<span class="err">${ok} copied, ${fail} failed.</span> Send Claude a screenshot of this table.`
+    : `<span class="ok">All ${ok} document(s) copied.</span> You can close this page and delete migrate.html from the repo.`;
+}
+</script></body></html>
