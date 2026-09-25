@@ -11050,66 +11050,83 @@ function exportARExcel(){
 }
 
 // ─── CLIENT INVOICE TEMPLATE (print / PDF / Excel) — bilingual KH/EN, matches company tax-invoice form ──
-const INVOICE_FONT_IMPORT=`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');`;
+// v2 layout (A4 portrait): single aligned grid, Khmer OS Siemreap (Khmer) + Times New Roman (English), full-width company name
+const INVOICE_FONT_IMPORT=`@import url('https://fonts.googleapis.com/css2?family=Siemreap&family=Moul&display=swap');`;
 const INVOICE_PRINT_CSS=`
 ${INVOICE_FONT_IMPORT}
-.inv-doc{background:#fff;color:#1a1d23;font-family:'Inter','Noto Sans Khmer',sans-serif;font-size:11px;border:1.5px solid #1a1d23}
-.inv-doc *{box-sizing:border-box}
-.inv-doc .kh{font-family:'Noto Sans Khmer','Inter',sans-serif}
-.inv-pad{padding:14px 18px}
-.inv-hd{display:flex;gap:12px;align-items:flex-start;border-bottom:1.5px solid #1a1d23}
-.inv-hd img{width:56px;height:56px;object-fit:contain;flex-shrink:0}
-.inv-hd-co-kh{font-size:16px;font-weight:700;color:#1a1d23;line-height:1.4}
-.inv-hd-co{font-size:12.5px;font-weight:700;color:#1a1d23}
-.inv-hd-sub{font-size:9.5px;color:#1a1d23;margin-top:4px;line-height:1.65}
-.inv-title-box{text-align:center;border-bottom:1.5px solid #1a1d23;padding:10px 0}
-.inv-title-kh{font-size:18px;font-weight:800;color:#1a1d23}
-.inv-title{font-size:12px;font-weight:700;color:#1a1d23;letter-spacing:1.5px;margin-top:1px}
-table.inv-grid{width:100%;border-collapse:collapse;font-size:10.5px}
-table.inv-grid td{border:1px solid #1a1d23;padding:6px 10px;vertical-align:top;color:#1a1d23}
-table.inv-grid .lbl{color:#1a1d23}
-table.inv-grid .lbl .kh{display:block;line-height:1.4}
-table.inv-grid .lbl .en{display:block;color:#374151}
-table.inv-grid .val{font-weight:700}
-.inv-tbl{width:100%;border-collapse:collapse;font-size:10.5px;border-top:1.5px solid #1a1d23}
-.inv-tbl th{border:1px solid #1a1d23;padding:6px 8px;text-align:left;font-weight:700}
-.inv-tbl th .kh{display:block;font-size:10px}
-.inv-tbl th .en{display:block;font-size:9px;font-weight:500;color:#374151}
-.inv-tbl th.num,.inv-tbl td.num{text-align:right}
-.inv-tbl th:nth-child(1),.inv-tbl td:nth-child(1){text-align:center;width:34px}
-.inv-tbl th:nth-child(3),.inv-tbl td:nth-child(3){text-align:center;width:64px}
-.inv-tbl td{border:1px solid #1a1d23;padding:8px;color:#1a1d23;vertical-align:top;height:20px}
-.inv-tbl td .amt-khr{display:block}
-.inv-tbl td .amt-usd{display:block;color:#374151}
-.inv-bottom{display:flex;border-top:none}
-.inv-bank{flex:1.4;border:1px solid #1a1d23;border-top:none;padding:10px 14px;font-size:10px;color:#1a1d23;line-height:1.75}
-.inv-bank .lbl{font-weight:700;margin-bottom:3px}
-.inv-totals{flex:1;border:1px solid #1a1d23;border-top:none;border-left:none;font-size:10.5px}
-.inv-totals-row{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #1a1d23}
-.inv-totals-row:last-child{border-bottom:none}
-.inv-totals-row .lbl .kh{display:block;line-height:1.3}
-.inv-totals-row .lbl .en{display:block;color:#374151;font-size:9.5px}
-.inv-totals-row .val{text-align:right;font-weight:700}
-.inv-totals-row .val .amt-khr{display:block}
-.inv-totals-row .val .amt-usd{display:block;color:#374151;font-weight:600}
-.inv-status{display:inline-block;margin:8px 0 0 14px;padding:3px 12px;border-radius:12px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
-.inv-terms{font-size:9.5px;color:#1a1d23;line-height:1.7;padding:10px 14px}
-.inv-terms .hd{font-weight:700}
-.inv-sign{display:flex;justify-content:space-between;gap:24px;padding:6px 14px 14px}
-.inv-sign-box{flex:1;text-align:center;font-size:9.5px;color:#1a1d23}
-.inv-sign-line{border-top:1px solid #1a1d23;margin-top:36px;padding-top:5px}
-.inv-sign-line .kh{display:block}
-.inv-ftr{border-top:1px solid #1a1d23;padding:8px 14px;font-size:9px;color:#1a1d23;line-height:1.7;text-align:center}
-.inv-ftr .kh{display:block}
-@media print{ body{padding:0!important} }
+.alinv{--en:'Times New Roman','Liberation Serif',Times,serif;--khf:'Khmer OS Siemreap','Siemreap';--muol:'Khmer OS Muol Light','Moul';
+  --ink:#1c2430;--muted:#5b6573;--line:#9aa4b1;--head:#1f3b63;--fill:#eef2f7;
+  width:718px;background:#fff;color:var(--ink);font-family:var(--en),var(--khf),'Microsoft YaHei','SimSun',serif;font-size:13px;line-height:1.3;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.alinv *{box-sizing:border-box;margin:0;padding:0}
+.alinv .kh{font-family:var(--khf),var(--en),serif}
+.alinv .muol{font-family:var(--muol),var(--khf),serif;font-weight:normal}
+.alinv .hdr{display:flex;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2px solid var(--head)}
+.alinv .hdr img{height:124px;width:auto;flex:0 0 auto;object-fit:contain}
+.alinv .co{flex:1 1 auto;min-width:0;padding-top:8px}
+.alinv .co .fit{display:block;white-space:nowrap;line-height:1.2;color:var(--head);font-size:30px}
+.alinv .co .en-name{font-weight:bold;letter-spacing:.02em}
+.alinv .co .meta{display:block;margin-top:2px;font-size:10.5px;color:var(--muted);line-height:1.4}
+.alinv .co .meta .r{text-align:left!important;margin-top:1px}
+.alinv .co .meta b{color:var(--ink)}
+.alinv .title{position:relative;text-align:center;padding:6px 0 7px}
+.alinv .title .t-kh{font-size:18px;color:var(--head);line-height:1.45}
+.alinv .title .t-en{font-size:16px;font-weight:bold;letter-spacing:.35em;color:var(--head)}
+.alinv .badge{position:absolute;right:0;top:50%;transform:translateY(-50%);border:1.5px solid;font-weight:bold;font-size:11.5px;letter-spacing:.15em;padding:3px 11px;border-radius:7px;text-transform:uppercase}
+.alinv table.grid{width:100%;border-collapse:collapse;table-layout:fixed;border:1.2px solid var(--ink)}
+.alinv .grid td,.alinv .grid th{border:1px solid var(--line);padding:4px 7px;vertical-align:middle;line-height:1.2;text-align:left}
+.alinv col.c-no{width:34px}.alinv col.c-qty{width:52px}.alinv col.c-up{width:150px}.alinv col.c-amt{width:150px}
+.alinv .lbl{font-size:11px;color:var(--muted);line-height:1.3}
+.alinv .lbl .k{font-family:var(--khf);color:var(--ink);display:block;font-size:12px;line-height:1.45}
+.alinv .val{font-weight:bold}
+.alinv .cust-name{font-weight:bold;font-size:13.5px;line-height:1.5}
+.alinv .cust-name .k{font-family:var(--khf);font-weight:normal}
+.alinv .kv{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:baseline}
+.alinv .kvl{font-size:11px;color:var(--muted);line-height:1.3;white-space:nowrap}
+.alinv .kvl.k{font-family:var(--khf);color:var(--ink);font-size:12px;line-height:1.45}
+.alinv .kvv.cust-kh{font-size:14px;color:var(--ink);line-height:1.45}
+.alinv .kvv.cust-en{font-weight:bold;font-size:13.5px;color:var(--ink);line-height:1.3}
+.alinv .kv-row{display:flex;align-items:center;gap:14px}
+.alinv .kv-row .tin{font-size:13.5px}
+.alinv .addr{font-size:11px;color:var(--muted);line-height:1.5}
+.alinv tr.th th{background:var(--head);color:#fff;font-weight:bold;font-size:11.5px;line-height:1.3;border-color:var(--head)}
+.alinv tr.th th .k{font-family:var(--khf);font-weight:normal;display:block;font-size:11.5px}
+.alinv .c{text-align:center!important}.alinv .r{text-align:right!important}
+.alinv .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.alinv .num .amt-khr{display:block}
+.alinv .num .amt-usd{display:block;color:var(--muted);font-size:11.5px}
+.alinv .item td{height:30px}
+.alinv .desc{line-height:1.4!important}
+.alinv .desc .k{font-family:var(--khf);display:block;font-size:12.5px;color:#222;line-height:1.55}
+.alinv .desc .en{display:block}
+.alinv .desc .zh{display:block;font-family:'Microsoft YaHei','SimSun','Noto Sans CJK SC',sans-serif;font-size:12px;color:#333}
+.alinv .tot .num .amt-khr{font-weight:bold}
+.alinv .tot .num .amt-usd{font-weight:bold;color:var(--ink);font-size:12px}
+.alinv tr.grand td{background:var(--fill)}
+.alinv tr.due td{background:var(--head);color:#fff;border-color:var(--head)}
+.alinv tr.due .lbl,.alinv tr.due .lbl .k{color:#fff}
+.alinv .bank{font-size:12px;line-height:1.6;vertical-align:top!important}
+.alinv .bank h4{font-size:13px;margin-bottom:4px;color:var(--head)}
+.alinv .bank table{border-collapse:collapse;font-size:inherit}
+.alinv .bank table td{border:none;padding:0 5px 0 0;vertical-align:top}
+.alinv .bank table td.nw{white-space:nowrap}
+.alinv .bank table td:first-child{color:var(--muted);white-space:nowrap}
+.alinv .terms{font-size:11px;margin-top:8px}
+.alinv .terms b{color:var(--head)}
+.alinv .sign{display:flex;gap:70px;margin-top:115px;padding:0 20px}
+.alinv .sign div{flex:1;border-top:1px solid var(--ink);text-align:center;padding-top:4px;font-size:11px;line-height:1.35}
+.alinv .sign .k{font-family:var(--khf);display:block}
+.alinv .foot{margin-top:18px;border-top:1px solid var(--line);padding-top:5px;text-align:center;font-size:10.5px;color:var(--muted);line-height:1.4}
+.alinv .foot .k{font-family:var(--khf);display:block}
 `;
-const INVOICE_STATUS_COLORS={Paid:'#00b87a',Overdue:'#f0416e',Partial:'#0096d4',Unpaid:'#e87c00'};
+const INVOICE_STATUS_COLORS={Paid:'#00b87a',Overdue:'#c0392b',Partial:'#0096d4',Unpaid:'#c0392b'};
 
-function _invLogo(){ const img=document.querySelector('.sb-logo img'); return img?img.src:''; }
+const INVOICE_LOGO='data:image/png;base64,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';
+function _invLogo(){ return INVOICE_LOGO; }
 function _invFmtDate(d){ return d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'; }
-function fmtRiel(v){ return Number(v||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+' ​រៀល'; }
+function fmtRiel(v){ return Number(v||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})+' <span class="kh">រៀល</span>'; }
 function _invDual(usd,khr,showKhr){
-  if(!showKhr) return `<span class="amt-usd">${fmtMoney(usd)}</span>`;
+  if(!showKhr) return `<span class="amt-khr">${fmtMoney(usd)}</span>`;
   return `<span class="amt-khr">${fmtRiel(khr)}</span><span class="amt-usd">${fmtMoney(usd)}</span>`;
 }
 function _invVat(a,f){
@@ -11121,6 +11138,41 @@ function _invVat(a,f){
   const exRate=+f.exRate||0;
   return { vatPct, net, vat, gross, exRate,
     netKhr:net*exRate, vatKhr:vat*exRate, grossKhr:gross*exRate };
+}
+// Stretch each company-name line to the full header width so the KH and EN names align edge-to-edge
+function _invFitNames(root){
+  (root||document).querySelectorAll('.alinv [data-fit]').forEach(function(el){
+    const box=el.parentElement.clientWidth; if(!box) return;
+    let lo=8,hi=80;
+    for(let i=0;i<20;i++){ const mid=(lo+hi)/2; el.style.fontSize=mid+'px'; if(el.scrollWidth>box) hi=mid; else lo=mid; }
+    el.style.fontSize=lo+'px'; el.style.wordSpacing='0px';
+    const gaps=(el.textContent.match(/ /g)||[]).length, extra=box-el.scrollWidth;
+    if(gaps&&extra>0) el.style.wordSpacing=(extra/gaps)+'px';
+  });
+}
+function _invEnsureCss(){
+  if(document.getElementById('alinvCss')) return;
+  const s=document.createElement('style'); s.id='alinvCss'; s.textContent=INVOICE_PRINT_CSS; document.head.appendChild(s);
+}
+// Description order: Khmer (Khmer OS Siemreap) → English (Times New Roman) → Chinese, each on its own line
+function _invDescHTML(desc){
+  const isKh=c=>/[\u1780-\u17FF\u19E0-\u19FF\u200B]/.test(c), isZh=c=>/[\u2E80-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]/.test(c);
+  return String(desc||'').split(/\n/).map(line=>{
+    const kh=[],en=[],zh=[]; let cur=null,buf='';
+    const flush=()=>{ if(buf.trim()){ (cur==='kh'?kh:cur==='zh'?zh:en).push(buf.trim()); } buf=''; };
+    for(const ch of line){
+      const t=isKh(ch)?'kh':isZh(ch)?'zh':(/\s/.test(ch)?null:'en');
+      if(t===null){ buf+=ch; continue; }
+      if(cur!==null&&t!==cur) flush();
+      cur=t; buf+=ch;
+    }
+    flush();
+    let h='';
+    if(kh.length) h+=`<span class="k">${escHtml(kh.join(' '))}</span>`;
+    if(en.length) h+=`<span class="en">${escHtml(en.join(' '))}</span>`;
+    if(zh.length) h+=`<span class="zh">${escHtml(zh.join(' '))}</span>`;
+    return h;
+  }).join('');
 }
 
 function buildInvoiceHTML(a,opts){
@@ -11134,129 +11186,116 @@ function buildInvoiceHTML(a,opts){
   const creditTerm=opts.creditTerm||'';
   const v=_invVat(a,opts);
   const st=arStatusInfo(a);
-  const stColor=INVOICE_STATUS_COLORS[st.label]||'#e87c00';
+  const stColor=INVOICE_STATUS_COLORS[st.label]||'#c0392b';
   const companyName=a.co.replace(/^\d+-/,'');
   const showKhr=v.exRate>0;
-  return `<div class="inv-doc">
-    <div class="inv-hd inv-pad">
-      ${logo?`<img src="${logo}" alt="logo">`:''}
-      <div style="flex:1">
-        <div class="inv-hd-co-kh kh">អេអិលស៊ីខេអេច សឺវីស សឺលូសិន (ខេមបូឌា) ឯ.ក</div>
-        <div class="inv-hd-co">ALCKH SERVICES SOLUTION (CAMBODIA) CO.,LTD.</div>
-        <div class="inv-hd-sub">
-          <span class="kh">លេខអត្តសញ្ញាណកម្ម អតប (VAT TIN)</span> K005-902205217<br>
-          <span class="kh">អាសយដ្ឋាន៖</span> ផ្ទះលេខ ៨៩E ផ្លូវលេខ ៥៩២ ភូមិ ៤ សង្កាត់ បឹងកក់ ២ ខណ្ឌ ទួលគោក រាជធានីភ្នំពេញ<br>
-          Address: 89E Street 592, Village 4, Sangkat Boeng Kak Pir, Khan Tuol Kouk, Phnom Penh, Cambodia<br>
-          <span class="kh">ទូរស័ព្ទ</span>/Tel: (855)-078 952 828 / 010 378 560
-        </div>
+  const L=(kh,en)=>`<div class="lbl"><span class="k">${kh}</span>${en}</div>`;
+  return `<div class="alinv">
+  <div class="hdr">
+    ${logo?`<img src="${logo}" alt="logo">`:''}
+    <div class="co">
+      <span class="fit muol" data-fit>អេអិលស៊ីខេអេច សឺវីស សឺលូសិន (ខេមបូឌា) ឯ.ក</span>
+      <span class="fit en-name" data-fit>ALCKH SERVICES SOLUTION (CAMBODIA) CO., LTD.</span>
+      <div class="meta">
+        <div><span class="kh">អាសយដ្ឋាន៖ ផ្ទះលេខ ៨៩E ផ្លូវលេខ ៥៩២ ភូមិ៤ សង្កាត់បឹងកក់ ២ ខណ្ឌទួលគោក រាជធានីភ្នំពេញ</span><br>
+          Address: 89E Street 592, Village 4, Sangkat Boeng Kak Pir, Khan Tuol Kouk, Phnom Penh, Cambodia</div>
+        <div class="r" style="white-space:nowrap"><span class="kh">លេខអត្តសញ្ញាណកម្ម អតប</span> (VAT TIN): <b>K005-902205217</b><br>
+          <span class="kh">ទូរស័ព្ទ</span> / Tel: <b>(855) 078 952 828 / 010 378 560</b></div>
       </div>
-      <div class="inv-status" style="background:${stColor}22;color:${stColor};border:1.5px solid ${stColor}55">${st.label}</div>
     </div>
-
-    <div class="inv-title-box">
-      <div class="inv-title-kh kh">វិក្កយបត្រអាករ</div>
-      <div class="inv-title">TAX INVOICE</div>
-    </div>
-
-    <table class="inv-grid">
+  </div>
+  <div class="title">
+    <div class="t-kh muol">វិក្កយបត្រអាករ</div>
+    <div class="t-en">TAX INVOICE</div>
+    <span class="badge" style="color:${stColor};border-color:${stColor}">${escHtml(st.label)}</span>
+  </div>
+  <table class="grid">
+    <colgroup><col class="c-no"><col><col class="c-qty"><col class="c-up"><col class="c-amt"></colgroup>
+    <tbody>
       <tr>
-        <td rowspan="2" style="width:56%">
-          <span class="kh">អតិថិជន៖</span> <span style="font-weight:700">${custKh?`${escHtml(custKh)} / `:''}${escHtml(companyName)}</span><br>
-          <span style="color:#374151">Customer: ${escHtml(companyName)}</span>
-          ${addr?`<br><span style="color:#374151">${escHtml(addr).replace(/\n/g,'<br>')}</span>`:''}
+        <td colspan="2" rowspan="2">
+          <div class="kv">
+            <span class="kvl k">អតិថិជន</span><span class="kvv kh cust-kh">${escHtml(custKh)}</span>
+            <span class="kvl">Customer</span><span class="kvv cust-en">${escHtml(companyName)}</span>
+          </div>
+          ${addr?`<div class="addr">${escHtml(addr).replace(/\n/g,'<br>')}</div>`:''}
         </td>
-        <td class="lbl" style="width:26%"><span class="kh">លេខវិក្កយបត្រ៖</span><span class="en">Invoice No:</span></td>
-        <td class="val">${escHtml(a.invoice_number||'—')}</td>
+        <td colspan="2">${L('លេខវិក្កយបត្រ','Invoice No.')}</td>
+        <td class="val r">${escHtml(a.invoice_number||'—')}</td>
       </tr>
       <tr>
-        <td class="lbl"><span class="kh">កាលបរិច្ឆេទ៖</span><span class="en">Date:</span></td>
-        <td class="val">${_invFmtDate(date)}</td>
+        <td colspan="2">${L('កាលបរិច្ឆេទ','Date')}</td>
+        <td class="val r">${_invFmtDate(date)}</td>
       </tr>
       <tr>
-        <td class="lbl"><span class="kh">លេខ អតប (VATTIN):</span><span class="en">Customer VAT TIN</span> ${escHtml(custVatTin)||'—'}</td>
-        <td class="lbl"><span class="en">Credit term</span></td>
-        <td class="val">${escHtml(creditTerm)||'—'}</td>
+        <td colspan="2"><div class="kv-row">${L('លេខអត្តសញ្ញាណកម្ម អតប','Customer VAT TIN')}<div class="val tin">${escHtml(custVatTin)||'—'}</div></div></td>
+        <td colspan="2">${L('រយៈពេលឥណទាន','Credit Term')}</td>
+        <td class="val r">${escHtml(creditTerm)||'—'}</td>
       </tr>
       <tr>
-        <td colspan="2" class="lbl"><span class="kh">យោងអត្រាប្តូរប្រាក់របស់ធនាគារជាតិកម្ពុជា</span><span class="en">Exchange Rate released by National Bank of Cambodia</span></td>
-        <td class="val">${showKhr?`1USD = ${v.exRate.toLocaleString('en')}​ រៀល`:'—'}</td>
+        <td colspan="4">${L('អត្រាប្តូរប្រាក់ យោងតាមធនាគារជាតិនៃកម្ពុជា','Exchange Rate released by National Bank of Cambodia')}</td>
+        <td class="val r num">${showKhr?`1 USD = ${v.exRate.toLocaleString('en')} <span class="kh">រៀល</span>`:'—'}</td>
       </tr>
-    </table>
-
-    <table class="inv-tbl">
-      <thead><tr>
-        <th><span class="kh">ល.រ</span><span class="en">No</span></th>
-        <th><span class="kh">បរិយាយ</span><span class="en">Description</span></th>
-        <th><span class="kh">បរិមាណ</span><span class="en">Quantity</span></th>
-        <th class="num"><span class="kh">ថ្លៃឯកតា</span><span class="en">Unit Price</span></th>
-        <th class="num"><span class="kh">ថ្លៃសរុប</span><span class="en">Amount</span></th>
-      </tr></thead>
-      <tbody>
-        <tr>
-          <td>1</td>
-          <td>${escHtml(desc)}</td>
-          <td>1</td>
-          <td class="num">${_invDual(v.net,v.netKhr,showKhr)}</td>
-          <td class="num">${_invDual(v.net,v.netKhr,showKhr)}</td>
-        </tr>
-        <tr><td>2</td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>3</td><td></td><td></td><td></td><td></td></tr>
-      </tbody>
-    </table>
-
-    <div class="inv-bottom">
-      <div class="inv-bank">
-        <div class="lbl">Bank Detail Information:</div>
-        Bank Beneficiary: ABA BANK<br>
-        Account Name: ALCKH SERVICES SOLUTION (CAMBODIA) CO.,LTD<br>
-        Account Number: 902205217<br>
-        Bank Address: No.148, Preah Sihanouk Blvd., Sangkat BKK I,<br>Khan Chamkarmorn, Phnom Penh, Cambodia<br>
-        SWIFT Code: ABAAKHPP
-      </div>
-      <div class="inv-totals">
-        <div class="inv-totals-row">
-          <span class="lbl"><span class="kh">សរុប</span><span class="en">Sub Total</span></span>
-          <span class="val">${_invDual(v.net,v.netKhr,showKhr)}</span>
-        </div>
-        <div class="inv-totals-row">
-          <span class="lbl"><span class="kh">អាករលើតម្លៃបន្ថែម ${v.vatPct}%</span><span class="en">VAT (${v.vatPct}%)</span></span>
-          <span class="val">${_invDual(v.vat,v.vatKhr,showKhr)}</span>
-        </div>
-        <div class="inv-totals-row">
-          <span class="lbl"><span class="kh">សរុបរួមទាំងអាករលើតម្លៃបន្ថែម</span><span class="en">Grand Total-VAT Included</span></span>
-          <span class="val">${_invDual(v.gross,v.grossKhr,showKhr)}</span>
-        </div>
-        <div class="inv-totals-row">
-          <span class="lbl"><span class="en">Amount Paid</span></span>
-          <span class="val">-${fmtMoney(a.paid)}</span>
-        </div>
-        <div class="inv-totals-row">
-          <span class="lbl"><span class="en">Balance Due</span></span>
-          <span class="val">${fmtMoney(arOutstanding(a))}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="inv-terms">
-      <span class="hd">Terms &amp; Conditions</span><br>
-      * Note: This Invoice can be modified or revised within 5 days after the issue date.
-      ${a.notes?`<br><span class="hd">Notes:</span> ${escHtml(a.notes)}`:''}
-    </div>
-
-    <div class="inv-sign">
-      <div class="inv-sign-box">
-        <div class="inv-sign-line"><span class="kh">ហត្ថលេខានិងឈ្មោះអ្នកទិញ</span>Customer's Signature &amp; Name</div>
-      </div>
-      <div class="inv-sign-box">
-        <div class="inv-sign-line"><span class="kh">ហត្ថលេខានិងឈ្មោះអ្នកលក់</span>Seller's Signature &amp; Name</div>
-      </div>
-    </div>
-
-    <div class="inv-ftr">
-      <span class="kh">សម្គាល់៖ ច្បាប់ដើមសម្រាប់អ្នកទិញ ច្បាប់ចម្លងសម្រាប់អ្នកលក់</span>
-      Note: Original Invoice for the customer, Copied Invoice for seller
-    </div>
-  </div>`;
+      <tr class="th">
+        <th class="c"><span class="k">ល.រ</span>No.</th>
+        <th><span class="k">បរិយាយ</span>Description</th>
+        <th class="c"><span class="k">បរិមាណ</span>Qty</th>
+        <th class="r"><span class="k">ថ្លៃឯកតា</span>Unit Price</th>
+        <th class="r"><span class="k">ថ្លៃសរុប</span>Amount</th>
+      </tr>
+      <tr class="item">
+        <td class="c">1</td>
+        <td class="desc">${_invDescHTML(desc)}</td>
+        <td class="c">1</td>
+        <td class="r num">${_invDual(v.net,v.netKhr,showKhr)}</td>
+        <td class="r num">${_invDual(v.net,v.netKhr,showKhr)}</td>
+      </tr>
+      <tr class="item"><td class="c">2</td><td></td><td></td><td></td><td></td></tr>
+      <tr class="item"><td class="c">3</td><td></td><td></td><td></td><td></td></tr>
+      <tr class="item"><td class="c">4</td><td></td><td></td><td></td><td></td></tr>
+      <tr class="item"><td class="c">5</td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+    <tbody class="tot">
+      <tr>
+        <td colspan="3" rowspan="5" class="bank">
+          <h4>Bank Detail Information</h4>
+          <table>
+            <tr><td>Bank Beneficiary</td><td>: ABA BANK</td></tr>
+            <tr><td>Account Name</td><td class="nw">: ALCKH SERVICES SOLUTION (CAMBODIA) CO., LTD.</td></tr>
+            <tr><td>Account Number</td><td>: <b>902205217</b></td></tr>
+            <tr><td>Bank Address</td><td>: No.148, Preah Sihanouk Blvd., Sangkat BKK I, Khan Chamkarmorn, Phnom Penh, Cambodia</td></tr>
+            <tr><td>SWIFT Code</td><td>: <b>ABAAKHPP</b></td></tr>
+          </table>
+        </td>
+        <td>${L('សរុប','Sub Total')}</td>
+        <td class="r num">${_invDual(v.net,v.netKhr,showKhr)}</td>
+      </tr>
+      <tr>
+        <td>${L('អាករលើតម្លៃបន្ថែម '+v.vatPct+'%','VAT ('+v.vatPct+'%)')}</td>
+        <td class="r num">${_invDual(v.vat,v.vatKhr,showKhr)}</td>
+      </tr>
+      <tr class="grand">
+        <td>${L('សរុបរួមទាំងអាករលើតម្លៃបន្ថែម','Grand Total (VAT Included)')}</td>
+        <td class="r num">${_invDual(v.gross,v.grossKhr,showKhr)}</td>
+      </tr>
+      <tr>
+        <td>${L('ចំនួនទឹកប្រាក់បានបង់','Amount Paid')}</td>
+        <td class="r num val">${fmtMoney(a.paid)}</td>
+      </tr>
+      <tr class="due">
+        <td>${L('សមតុល្យត្រូវបង់','Balance Due')}</td>
+        <td class="r num val" style="font-size:15px">${fmtMoney(arOutstanding(a))}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="terms"><b>Terms &amp; Conditions:</b> This invoice can be modified or revised within 5 days after the issue date.
+    ${a.notes?`<br><b>Notes:</b> ${escHtml(a.notes)}`:''}</div>
+  <div class="sign">
+    <div><span class="k">ហត្ថលេខា និងឈ្មោះអ្នកទិញ</span>Customer's Signature &amp; Name</div>
+    <div><span class="k">ហត្ថលេខា និងឈ្មោះអ្នកលក់</span>Seller's Signature &amp; Name</div>
+  </div>
+  <div class="foot"><span class="k">សម្គាល់៖ ច្បាប់ដើមសម្រាប់អ្នកទិញ ច្បាប់ចម្លងសម្រាប់អ្នកលក់</span>Note: Original invoice for the customer, copy for the seller</div>
+</div>`;
 }
 
 function _invReadForm(){
@@ -11293,7 +11332,29 @@ function renderInvoicePreview(){
   const idx=window._invoiceIdx;
   const a=AR_DATA[idx]; if(!a)return;
   const box=document.getElementById('invoicePreviewBox');
-  if(box) box.innerHTML=buildInvoiceHTML(a,_invReadForm());
+  if(!box) return;
+  // Isolated iframe so the dashboard CSS never leaks into the invoice layout
+  const html=buildInvoiceHTML(a,_invReadForm());
+  const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;overflow:hidden}body{padding:12px}${INVOICE_PRINT_CSS}</style></head><body>${html}<script>${_invFitNames.toString()}
+_invFitNames(document);(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){_invFitNames(document);parent.postMessage({alinvH:document.body.scrollHeight},'*');});<\/script></body></html>`;
+  let fr=box.querySelector('iframe.alinv-fr');
+  if(!fr){
+    box.innerHTML='';
+    const wrap=document.createElement('div'); wrap.style.cssText='position:relative;overflow:hidden;background:#fff';
+    fr=document.createElement('iframe'); fr.className='alinv-fr';
+    fr.style.cssText='border:0;width:742px;height:1060px;transform-origin:0 0;display:block';
+    wrap.appendChild(fr); box.appendChild(wrap);
+    if(!window._alinvMsg){ window._alinvMsg=true; window.addEventListener('resize',_invScalePreview); window.addEventListener('message',e=>{ if(e.data&&e.data.alinvH){ const f=document.querySelector('#invoicePreviewBox iframe.alinv-fr'); if(f){ f.style.height=e.data.alinvH+'px'; _invScalePreview(); } } }); }
+  }
+  fr.srcdoc=doc;
+  _invScalePreview();
+}
+function _invScalePreview(){
+  const box=document.getElementById('invoicePreviewBox'); if(!box) return;
+  const fr=box.querySelector('iframe.alinv-fr'); if(!fr) return;
+  const w=box.getBoundingClientRect().width-4; const s=Math.min(1,(w>0?w:742)/742);
+  fr.style.transform='scale('+s+')';
+  fr.parentElement.style.height=(parseFloat(fr.style.height)*s)+'px';
 }
 
 function printInvoiceDoc(){
@@ -11302,9 +11363,11 @@ function printInvoiceDoc(){
   const html=buildInvoiceHTML(a,_invReadForm());
   const w=window.open('','_blank');
   if(!w){ toast2('Please allow popups to print the invoice','a'); return; }
-  w.document.write(`<!DOCTYPE html><html><head><title>Invoice ${escHtml(a.invoice_number||'')}</title><meta charset="utf-8"><style>body{margin:0;padding:28px;background:#fff}${INVOICE_PRINT_CSS}</style></head><body>${html}</body></html>`);
+  const fit=_invFitNames.toString();
+  w.document.write(`<!DOCTYPE html><html><head><title>Invoice ${escHtml(a.invoice_number||'')}</title><meta charset="utf-8"><style>@page{size:A4 portrait;margin:10mm}html,body{margin:0;padding:0;background:#fff}${INVOICE_PRINT_CSS}</style></head><body>${html}<script>${fit}
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){_invFitNames(document);setTimeout(function(){try{window.focus();window.print();}catch(e){}},200);});
+window.addEventListener('beforeprint',function(){_invFitNames(document);});<\/script></body></html>`);
   w.document.close();
-  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} },350);
 }
 
 function exportInvoiceExcel(){
