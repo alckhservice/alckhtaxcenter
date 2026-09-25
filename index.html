@@ -612,6 +612,9 @@ table.fitw{table-layout:fixed}
 .cmt-edit{width:100%}
 .daily-wrap{max-width:100%}
 .dn-scroll td[style*="max-width"]{max-width:none !important}
+/* Row-number (#) column: keep numbers on one line, never stacked vertically */
+.tbl-scroll td:first-child,.fin-scroll td:first-child,.dn-scroll td:first-child,.tbl-scroll th:first-child,.fin-scroll th:first-child,.dn-scroll th:first-child{white-space:nowrap !important;overflow-wrap:normal !important;word-break:keep-all !important;padding-left:6px !important;padding-right:4px !important;text-align:center}
+.tbl-scroll td:first-child>.cell{padding-left:0 !important;padding-right:0 !important;align-items:center}
 /* KPI + manager cards: fill the width in a responsive grid instead of a sideways row (internal card scroll kept) */
 .mgr-grid,.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;overflow-x:visible;padding-bottom:0}
 .mgr-card,.kcard{flex:none;min-width:0}
@@ -11664,6 +11667,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       const m=(th.getAttribute('style')||'').match(/(?:^|;)\s*width:\s*(\d+(?:\.\d+)?)px/);
       return m?+m[1]:0;
     });
+    // row-number column: at least 44px-equivalent so 2–3 digit numbers stay horizontal
+    ths.forEach((th,i)=>{ if(th.textContent.trim()==='#') px[i]=Math.max(px[i]||0,44); });
     const known=px.filter(v=>v>0);
     if(!known.length){ t.classList.remove('fitw'); return; }
     // columns without a width get the average width of the others
