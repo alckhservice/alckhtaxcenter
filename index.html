@@ -598,6 +598,43 @@ tr.r-pend td{background:rgba(240,65,110,.03)}
 .inv-totals div{display:flex;justify-content:space-between;padding:7px 0;color:#374151}
 .inv-totals .bal{border-top:2px solid #2f4a68;margin-top:4px;padding-top:10px;font-size:15px;font-weight:800;color:#2f4a68}
 .inv-ftr{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:10.5px;color:#6b7280;line-height:1.7}
+
+/* ══ FIT-TO-WIDTH LAYER — every tab fits the screen width, no sideways scrolling ══ */
+/* .app is a flex item with margin:auto — force it to take the full width so content never shrinks to fit */
+.mainwrap>.app{width:100%;min-width:0}
+table{min-width:0}
+.tbl-scroll table,.fin-scroll table,.dn-scroll table{min-width:0 !important;width:100%}
+table.fitw{table-layout:fixed}
+.tbl-scroll th,.fin-scroll th,.dn-scroll th{white-space:normal;line-height:1.3;word-break:normal;overflow-wrap:normal}
+.tbl-scroll td,.fin-scroll td,.dn-scroll td{overflow-wrap:anywhere}
+.co-name,.fin-scroll td div,.dn-scroll td div{overflow-wrap:anywhere}
+.cmt-view{max-width:100%}
+.cmt-edit{width:100%}
+.daily-wrap{max-width:100%}
+.dn-scroll td[style*="max-width"]{max-width:none !important}
+/* KPI + manager cards: fill the width in a responsive grid instead of a sideways row (internal card scroll kept) */
+.mgr-grid,.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;overflow-x:visible;padding-bottom:0}
+.mgr-card,.kcard{flex:none;min-width:0}
+.staff-list{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.alerts-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.dcard[style*="max-width"]{max-width:100% !important}
+/* Compact spacing on laptop-size screens so dense tables still breathe */
+@media(max-width:1600px){
+  .app{padding:14px 14px 32px}
+  th{padding:9px 7px;letter-spacing:.3px}
+  td>.cell{padding:7px 7px}
+  .fin-scroll th,.dn-scroll th{padding:8px 7px;letter-spacing:.3px}
+  .fin-scroll td,.dn-scroll td{padding:8px 7px;font-size:11px}
+  .tbp-row{gap:3px}
+  .ck{width:20px;height:20px}
+  .dd{width:14px;height:14px;font-size:6px}
+}
+@media(max-width:1400px){
+  .sidebar{width:200px}
+  .sb-item{padding:9px 10px;font-size:12px}
+  .topbar{padding:10px 14px}
+  .btn{padding:7px 11px}
+}
 </style>
 </head>
 <body data-new-gr-c-s-check-loaded="14.1326.0" data-gr-ext-installed="">
@@ -727,9 +764,9 @@ tr.r-pend td{background:rgba(240,65,110,.03)}
         <th style="width:112px">Team</th>
         <th style="width:78px">Dates</th>
         <th style="width:86px">Status</th>
-        <th style="width:92px">T/B/P</th>
-        <th style="width:155px">Comments</th>
-        <th style="width:205px">Daily Progress</th>
+        <th style="width:112px">T/B/P</th>
+        <th style="width:140px">Comments</th>
+        <th style="width:190px">Daily Progress</th>
         <th style="width:110px">Fee / Paid</th>
         <th style="width:80px">Outstanding</th>
         <th style="width:110px">Registered</th>
@@ -11608,6 +11645,46 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
+
+
+<script>
+/* FIT-TO-WIDTH: turn each table's fixed px column widths into percentages so the table
+   always spans exactly the available width. Re-runs automatically when tables re-render. */
+(function(){
+  function fitTable(t){
+    const row=t.tHead&&t.tHead.rows[0]; if(!row) return;
+    let ths=[...row.cells]; if(!ths.length||ths.some(th=>th.colSpan>1)) return;
+    // hide empty trailing header cells that have no matching body column (keeps widths honest)
+    const br=t.tBodies[0]&&[...t.tBodies[0].rows].find(r=>r.cells.length>1);
+    if(br){ const n=[...br.cells].reduce((a,c)=>a+c.colSpan,0);
+      ths.forEach((th,i)=>{ const extra=i>=n&&!th.textContent.trim(); th.style.display=extra?'none':''; });
+      ths=ths.filter(th=>th.style.display!=='none'); }
+    const px=ths.map(th=>{
+      if(th.dataset.fpx) return +th.dataset.fpx;
+      const m=(th.getAttribute('style')||'').match(/(?:^|;)\s*width:\s*(\d+(?:\.\d+)?)px/);
+      return m?+m[1]:0;
+    });
+    const known=px.filter(v=>v>0);
+    if(!known.length){ t.classList.remove('fitw'); return; }
+    // columns without a width get the average width of the others
+    const avg=known.reduce((a,b)=>a+b,0)/known.length;
+    const w=px.map(v=>v>0?v:avg), total=w.reduce((a,b)=>a+b,0);
+    ths.forEach((th,i)=>{ th.dataset.fpx=w[i]; th.style.width=(w[i]/total*100).toFixed(3)+'%'; });
+    t.classList.add('fitw');
+  }
+  function fitAll(){ document.querySelectorAll('.app table').forEach(t=>{ if(!t.closest('.inv-doc')) fitTable(t); }); }
+  let q=false;
+  function schedule(){ if(q) return; q=true; requestAnimationFrame(()=>{ q=false; fitAll(); }); }
+  document.addEventListener('DOMContentLoaded',()=>{
+    fitAll();
+    const app=document.querySelector('.app');
+    if(app) new MutationObserver(muts=>{
+      if(muts.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&(n.tagName==='TABLE'||n.tagName==='THEAD'||n.tagName==='TR'&&n.parentNode&&n.parentNode.tagName==='THEAD'||n.querySelector&&n.querySelector('thead'))))) schedule();
+    }).observe(app,{childList:true,subtree:true});
+  });
+  window.fitTablesToWidth=fitAll;
+})();
+</script>
 
 </body>
 </html>
