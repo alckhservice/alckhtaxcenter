@@ -11113,8 +11113,8 @@ ${INVOICE_FONT_IMPORT}
 .alinv .co .fit{display:block;white-space:nowrap;line-height:1.2;color:var(--head);font-size:30px}
 .alinv .co .en-name{font-weight:bold;letter-spacing:.02em}
 .alinv .co .meta{display:block;margin-top:2px;font-size:10.5px;color:var(--muted);line-height:1.4}
-.alinv .co .meta .mline{display:block;white-space:nowrap;font-size:11.5px}
-.alinv .co .meta .mrow{display:flex;justify-content:space-between;white-space:nowrap;font-size:11.5px;margin-top:1px}
+.alinv .co .meta .mline{display:block;width:max-content;white-space:nowrap;font-size:13px;line-height:1.45}
+.alinv .co .meta .mrow{display:flex;justify-content:space-between;gap:18px;white-space:nowrap;font-size:12.5px;line-height:1.45;margin-top:1px}
 .alinv .co .meta b{color:var(--ink)}
 .alinv .title{position:relative;text-align:center;padding:6px 0 7px}
 .alinv .title .t-kh{font-size:18px;color:var(--head);line-height:1.45}
@@ -11196,12 +11196,13 @@ function _invFitNames(root){
     const gaps=(el.textContent.match(/ /g)||[]).length, extra=box-el.scrollWidth;
     if(gaps&&extra>0) el.style.wordSpacing=(extra/gaps)+'px';
   });
-  // Address lines: shrink if too wide (max 12px), then justify edge-to-edge with the company name
+  // Address lines: grow to fill the width (max 14px), then justify edge-to-edge with the company name
   (root||document).querySelectorAll('.alinv [data-fitmeta]').forEach(function(el){
     const box=el.parentElement.clientWidth; if(!box) return;
-    let lo=6,hi=12; el.style.wordSpacing='0px';
+    let lo=6,hi=14; el.style.wordSpacing='0px';
     for(let i=0;i<16;i++){ const mid=(lo+hi)/2; el.style.fontSize=mid+'px'; if(el.scrollWidth>box) hi=mid; else lo=mid; }
     el.style.fontSize=lo+'px';
+    if(el.classList.contains('mrow')) return; // flex row already spreads VAT TIN / Tel to both edges
     const gaps=(el.textContent.match(/ /g)||[]).length, extra=box-el.scrollWidth;
     if(gaps&&extra>0) el.style.wordSpacing=(extra/gaps)+'px';
   });
@@ -11255,7 +11256,7 @@ function buildInvoiceHTML(a,opts){
       <div class="meta">
         <span class="mline kh" data-fitmeta>អាសយដ្ឋាន៖ ផ្ទះលេខ ៨៩E ផ្លូវលេខ ៥៩២ ភូមិ៤ សង្កាត់បឹងកក់ ២ ខណ្ឌទួលគោក រាជធានីភ្នំពេញ</span>
         <span class="mline" data-fitmeta>Address: 89E Street 592, Village 4, Sangkat Boeng Kak Pir, Khan Tuol Kouk, Phnom Penh, Cambodia</span>
-        <div class="mrow"><span><span class="kh">លេខអត្តសញ្ញាណកម្ម អតប</span> (VAT TIN): <b>K005-902205217</b></span><span><span class="kh">ទូរស័ព្ទ</span> / Tel: <b>(855) 078 952 828 / 010 378 560</b></span></div>
+        <div class="mrow" data-fitmeta><span><span class="kh">លេខអត្តសញ្ញាណកម្ម អតប</span> (VAT TIN): <b>K005-902205217</b></span><span><span class="kh">ទូរស័ព្ទ</span> / Tel: <b>(855) 078 952 828 / 010 378 560</b></span></div>
       </div>
     </div>
   </div>
